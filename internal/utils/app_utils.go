@@ -2,17 +2,17 @@ package utils
 
 import (
 	"errors"
+	"maps"
 	"net"
 	"net/url"
 	"strings"
-	"tinyauth/internal/config"
-	"tinyauth/internal/utils/decoders"
-
-	"maps"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
 	"github.com/weppos/publicsuffix-go/publicsuffix"
+
+	"tinyauth/internal/config"
+	"tinyauth/internal/utils/decoders"
 )
 
 // Get cookie domain parses a hostname and returns the upper domain (e.g. sub1.sub2.domain.com -> sub2.domain.com)
@@ -100,17 +100,17 @@ func IsRedirectSafe(redirectURL string, domain string) bool {
 		return false
 	}
 
-	cookieDomain, err := GetCookieDomain(redirectURL)
+	host := parsedURL.Hostname()
+	if host == domain {
+		return true
+	}
 
+	cookieDomain, err := GetCookieDomain(redirectURL)
 	if err != nil {
 		return false
 	}
 
-	if cookieDomain != domain {
-		return false
-	}
-
-	return true
+	return cookieDomain == domain
 }
 
 func GetLogLevel(level string) zerolog.Level {
