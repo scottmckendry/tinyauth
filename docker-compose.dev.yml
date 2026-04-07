@@ -1,19 +1,4 @@
 services:
-  traefik:
-    image: traefik:v3.6
-    command: --api.insecure=true --providers.docker
-    ports:
-      - 80:80
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-
-  whoami:
-    image: traefik/whoami:latest
-    labels:
-      traefik.enable: true
-      traefik.http.routers.whoami.rule: Host(`whoami.127.0.0.1.sslip.io`)
-      traefik.http.routers.whoami.middlewares: tinyauth
-
   tinyauth-frontend:
     build:
       context: .
@@ -22,9 +7,9 @@ services:
       - ./frontend/src:/frontend/src
     ports:
       - 5173:5173
-    labels:
-      traefik.enable: true
-      traefik.http.routers.tinyauth.rule: Host(`tinyauth.127.0.0.1.sslip.io`)
+    networks:
+      - default
+      - oidctest
 
   tinyauth-backend:
     build:
@@ -41,9 +26,13 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./data:/data
     ports:
-      - 3000:3000
+      - 127.0.0.1:3001:3000
       - 4000:4000
-    labels:
-      traefik.enable: true
-      traefik.http.middlewares.tinyauth.forwardauth.address: http://tinyauth-backend:3000/api/auth/traefik
-      traefik.http.middlewares.tinyauth.forwardauth.authResponseHeaders: remote-user, remote-sub, remote-name, remote-email, remote-groups
+    networks:
+      - default
+      - oidctest
+
+networks:
+  oidctest:
+    name: oidctest_default
+    external: true

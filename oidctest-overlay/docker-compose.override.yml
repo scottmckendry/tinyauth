@@ -1,0 +1,23 @@
+services:
+  server:
+    extra_hosts:
+      - "localhost.emobix.co.uk:172.22.0.10"
+    environment:
+      - USE_SYSTEM_CA_CERTS=1
+    volumes:
+      - ./nginx-selfsigned.crt:/certificates/nginx-selfsigned.crt:ro
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile-tinyauth
+    ports:
+      - "3000:3000"
+    networks:
+      default:
+        ipv4_address: 172.22.0.10
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16
