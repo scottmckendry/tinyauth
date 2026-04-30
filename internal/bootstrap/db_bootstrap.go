@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/tinyauthapp/tinyauth/internal/assets"
+	"github.com/tinyauthapp/tinyauth/internal/repository"
+	"github.com/tinyauthapp/tinyauth/internal/repository/sqlite"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
@@ -14,7 +16,28 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func (app *BootstrapApp) SetupDatabase(databasePath string) (*sql.DB, error) {
+func (app *BootstrapApp) SetupStore() (repository.Store, error) {
+	driver := app.config.Database.Driver
+	if driver == "" {
+		driver = "sqlite"
+	}
+
+	switch driver {
+	case "sqlite":
+		return app.setupSQLite(app.config.Database.Path)
+	default:
+		return nil, fmt.Errorf("unsupported database driver %q: supported drivers are: sqlite", driver)
+	}
+}
+
+// NewSQLiteStore opens a SQLite database at the given path, runs migrations, and returns a Store.
+// Useful for testing or when constructing a store outside of a BootstrapApp.
+func NewSQLiteStore(databasePath string) (repository.Store, error) {
+	app := &BootstrapApp{}
+	return app.setupSQLite(databasePath)
+}
+
+func (app *BootstrapApp) setupSQLite(databasePath string) (repository.Store, error) {
 	dir := filepath.Dir(databasePath)
 
 	if err := os.MkdirAll(dir, 0750); err != nil {
@@ -53,5 +76,5 @@ func (app *BootstrapApp) SetupDatabase(databasePath string) (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to migrate database: %w", err)
 	}
 
-	return db, nil
+	return sqlite.New(db), nil
 }

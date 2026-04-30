@@ -95,7 +95,9 @@ type Config struct {
 }
 
 type DatabaseConfig struct {
-	Path string `description:"The path to the database, including file name." yaml:"path"`
+	Path   string `description:"The path to the SQLite database, including file name." yaml:"path"`
+	Driver string `description:"The database driver to use (sqlite, postgres). Defaults to sqlite." yaml:"driver"`
+	DSN    string `description:"The data source name (connection string) for non-SQLite drivers." yaml:"dsn"`
 }
 
 type AnalyticsConfig struct {
